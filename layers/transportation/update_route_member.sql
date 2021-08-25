@@ -82,12 +82,13 @@ CREATE INDEX IF NOT EXISTS osm_highway_linestring_gen_z11_osm_id_idx ON osm_high
 
 ALTER TABLE osm_route_member ADD COLUMN IF NOT EXISTS concurrency_index int;
 
-INSERT INTO osm_route_member (id, concurrency_index)
+INSERT INTO osm_route_member (id, osm_id, concurrency_index)
   SELECT
     id,
+    osm_id,
     ROW_NUMBER() over (PARTITION BY member ORDER BY network_type, network, LENGTH(ref), ref) AS concurrency_index
   FROM osm_route_member
-  ON CONFLICT (id) DO UPDATE SET concurrency_index = EXCLUDED.concurrency_index;
+  ON CONFLICT (osm_id, id) DO UPDATE SET concurrency_index = EXCLUDED.concurrency_index;
 
 UPDATE osm_highway_linestring hl
   SET network = rm.network_type
